@@ -30,16 +30,16 @@ export const CALCULATION_CONSTANTS: CalculationConstants = {
   PROTECT_BASE_MEMORY: 928,
 
   // AI Detection Mode (人形车形检测)
-  // 公式：360 × [150 + 40 + 170] = 129600
-  PROTECT_AI_DETECTION_BUILTIN_CPU: 129600,
-  // 公式：515 × [150 + 40 + 325] = 265225
-  PROTECT_AI_DETECTION_EXTERNAL_CPU: 265225,
+  // 公式：360 = [150(连接+无图事件+巡店) + 40(人形车形) + 170(内置NVR)]
+  PROTECT_AI_DETECTION_BUILTIN_CPU: 360,
+  // 公式：515 = [150(连接+无图事件+巡店) + 40(人形车形) + 325(Relay推拉流)]
+  PROTECT_AI_DETECTION_EXTERNAL_CPU: 515,
 
   // People Count Mode (人头计数)
-  // 公式：510 × [150 + 190 + 170] = 183600
-  PROTECT_PEOPLE_COUNT_BUILTIN_CPU: 183600,
-  // 公式：665 × [150 + 190 + 325] = 342725
-  PROTECT_PEOPLE_COUNT_EXTERNAL_CPU: 342725,
+  // 公式：510 = [150(连接+无图事件+巡店) + 190(人头) + 170(内置NVR)]
+  PROTECT_PEOPLE_COUNT_BUILTIN_CPU: 510,
+  // 公式：665 = [150(连接+无图事件+巡店) + 190(人头) + 325(Relay推拉流)]
+  PROTECT_PEOPLE_COUNT_EXTERNAL_CPU: 665,
 
   // Memory per IPC
   // 公式：4.5（管理端）+ 10（内置NVR）= 14.5
