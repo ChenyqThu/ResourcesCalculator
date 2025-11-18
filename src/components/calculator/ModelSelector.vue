@@ -35,7 +35,7 @@
             <div class="text-xs text-gray-600 space-y-1">
               <p>{{ product.cpu.cores }} Cores</p>
               <p>{{ formatMemory(product.memory.capacity) }}</p>
-              <p>{{ product.storage.capacity }}GB Storage</p>
+              <p>{{ product.storage.maxCapacity }}GB Storage</p>
             </div>
           </div>
         </button>

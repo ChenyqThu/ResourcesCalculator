@@ -18,7 +18,7 @@
             <span class="font-medium">内存:</span> {{ formatMemory(product.memory.capacity) }}
           </div>
           <div>
-            <span class="font-medium">存储:</span> {{ product.storage.capacity }} GB
+            <span class="font-medium">存储:</span> {{ product.storage.maxCapacity }} GB
           </div>
           <div v-if="product.specifications?.maxCameras">
             <span class="font-medium">摄像头:</span> 最多 {{ product.specifications.maxCameras }}

@@ -1,10 +1,21 @@
 /**
+ * 存储类型
+ */
+export type StorageType = 'none' | 'sd' | 'ssd' | 'hdd';
+
+/**
+ * 支持的服务类型
+ */
+export type ServiceType = 'network' | 'network+guard';
+
+/**
  * 产品型号数据结构
  */
 export interface Product {
   id: string;
   name: string;
   series: string;
+  supportedServices: ServiceType; // 支持的服务
   cpu: {
     capacity: number; // DMIPS
     cores: number;
@@ -14,18 +25,23 @@ export interface Product {
     capacity: number; // MB
   };
   storage: {
-    capacity: number; // GB
+    type: StorageType; // 存储类型
+    maxCapacity: number; // 最大存储容量 (GB)
+    slots?: number; // 盘位数量
+  };
+  specifications: {
+    maxClients: number; // 最大客户端数
+    maxDevices: number; // 最大设备数（AP + Switch）
+    maxCameras?: {
+      hd: number;  // HD 摄像头最大数量
+      '2k': number; // 2K 摄像头最大数量
+      '4k': number; // 4K 摄像头最大数量
+    };
+    ports?: string;
   };
   price?: number;
   image?: string;
   storeUrl?: string;
-  specifications?: {
-    maxAPs?: number;
-    maxSwitches?: number;
-    maxCameras?: number;
-    ports?: string;
-    [key: string]: string | number | undefined;
-  };
 }
 
 /**
@@ -38,6 +54,7 @@ export interface InputParams {
   clientsCount: number; // 网络内总 Clients 数量
 
   // 安防设备 - 按清晰度区分
+  guardEnabled: boolean;   // 是否启用 Guard 功能
   hdCameras: number;      // HD (1080p) 摄像头数量
   '2kCameras': number;    // 2K 摄像头数量
   '4kCameras': number;    // 4K 摄像头数量

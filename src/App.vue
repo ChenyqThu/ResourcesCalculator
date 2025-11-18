@@ -43,6 +43,7 @@ const updateParams = (newParams: typeof params.value) => {
         <RecommendationResults
           :recommendedProducts="recommendedProducts"
           :allProducts="productsWithUsage"
+          :params="params"
         />
       </section>
 
