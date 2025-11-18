@@ -6,8 +6,10 @@
 为帮助用户根据业务规模和应用场景快速选择合适的 Omada 一体机（Fusion 系列）型号，开发官网资源计算器工具，实现从"产品介绍 → 参数输入 → 自动推荐 → Store 下单"的完整购买闭环。
 
 ### 1.2 项目目标
-- 提供直观的资源计算工具，帮助用户进行产品选型
+- 提供直观的**需求驱动**资源计算工具，帮助用户进行产品选型
 - 根据用户输入的网络规模、安防需求和功能选项，智能推荐合适的一体机型号
+- **自动检查规格限制**，过滤不符合需求的产品
+- **智能推荐硬盘大小**，根据存储时长和摄像头数量
 - 可视化展示 CPU、内存、存储资源使用情况
 - 提高用户购买决策效率，降低选型门槛
 
@@ -25,43 +27,63 @@
 用户可输入以下参数来描述其业务需求：
 
 **网络设备规模**
-- AP 数量（接入点）
-  - 类型：数字输入
-  - 范围：0-500
-  - 默认值：0
-  - 必填：否
-
 - Switch 数量（交换机）
-  - 类型：数字输入
+  - 类型：滑动条
   - 范围：0-200
   - 默认值：0
   - 必填：否
 
-**安防设备规模**
-- IPC 数量（IP Camera）
-  - 类型：数字输入
-  - 范围：0-100
+- AP 数量（接入点）
+  - 类型：滑动条
+  - 范围：0-200
   - 默认值：0
   - 必填：否
-  - 联动：输入 > 0 时，显示 NVR 类型选择和 AI 功能选项
+
+- Clients 数量（客户端）
+  - 类型：滑动条
+  - 范围：0-2000（步长 10）
+  - 默认值：0
+  - 必填：否
+  - **新增字段**
+
+**安防设备规模（Guard 功能）**
+- Guard 启用开关
+  - 类型：开关按钮
+  - 默认值：关闭
+  - 说明：控制是否启用 Guard 功能
+  - **新增功能**
+
+- HD Cameras (1080p)
+  - 类型：滑动条
+  - 范围：0-50
+  - 默认值：0
+  - 显示条件：Guard 已启用
+
+- 2K Cameras
+  - 类型：滑动条
+  - 范围：0-25
+  - 默认值：0
+  - 显示条件：Guard 已启用
+
+- 4K Cameras
+  - 类型：滑动条
+  - 范围：0-15
+  - 默认值：0
+  - 显示条件：Guard 已启用
 
 - NVR 类型
   - 类型：单选
   - 选项：内置 NVR / 外置 NVR
   - 默认值：内置 NVR
-  - 显示条件：IPC 数量 > 0
+  - 显示条件：Guard 已启用
 
-- Camera 分辨率（计划功能）
-  - 类型：下拉选择
-  - 选项：1080p / 4K / 8K
-  - 默认值：1080p
-  - 用途：存储容量计算
-
-- 存储时长（计划功能）
-  - 类型：滑块 + 数字输入
-  - 范围：7-90 天
-  - 默认值：30 天
-  - 用途：存储容量计算
+- 期望保存时长
+  - 类型：按钮组
+  - 选项：1周 / 2周 / 1月 / 3月 / 6月
+  - 对应天数：7 / 14 / 30 / 90 / 180
+  - 默认值：30 天（1月）
+  - 显示条件：Guard 已启用
+  - **新增功能**
 
 **功能选项（可选功能项）**
 - AI 功能
@@ -159,10 +181,32 @@ CPU使用率 = (总CPU消耗 / 机型CPU容量) × 100%
 #### 2.1.3 结果展示模块
 
 **机型推荐逻辑**
-- 根据计算出的资源需求，推荐 3 类机型：
-  1. **性价比型号**：资源使用率 60%-75% 的最低配置
-  2. **推荐型号**：资源使用率 75%-85% 的适配机型（标记为 Recommended）
-  3. **进阶型号**：资源使用率低于 60% 的高配机型（预留扩展空间）
+
+1. **规格限制检查**（优先级最高）
+   - 检查 Clients 数量是否超过产品上限
+   - 检查设备数量（AP + Switch）是否超过产品上限
+   - 检查摄像头数量（HD/2K/4K）是否超过产品规格
+   - 如果需要 Guard，过滤掉 Network Only 产品
+   - **超限处理**：超过规格限制的产品标记为超载状态，推荐度大幅下滑
+
+2. **Guard 需求匹配**
+   - 如果用户**未启用 Guard**：优先推荐 Network Only 产品
+   - 如果用户**启用 Guard**：过滤掉不支持 Guard 的产品
+
+3. **推荐类型分类**（基于资源使用率）
+   - **推荐型号** (Recommended)：资源使用率 75%-85%，资源利用充分且留有余量
+   - **性价比型号** (Value)：资源使用率 60%-75%，性价比较高
+   - **高性能型号** (Advanced)：资源使用率 < 60%，性能冗余，适合未来扩展
+
+4. **排序规则**
+   - Guard 需求匹配优先（Network Only 在无 Guard 需求时优先）
+   - 按推荐类型：Recommended > Value > Advanced
+   - 同类型内按最佳使用率排序
+
+5. **硬盘推荐**（仅 Guard 模式）
+   - 根据摄像头数量、类型和保存时长计算存储需求
+   - 按市面规格向上推荐：1TB / 8TB / 16TB / 28TB
+   - 检查推荐硬盘是否在产品支持的存储范围内
 
 **资源使用状态分级**
 - 🟢 低负载：0%-60%（绿色，安全）
@@ -183,9 +227,13 @@ CPU使用率 = (总CPU消耗 / 机型CPU容量) × 100%
 
 #### 2.1.4 交互设计
 
-**布局方案**
-- 左侧：参数输入面板（固定或可折叠）
-- 右侧：机型对比卡片（响应式网格布局）
+**布局方案 V2.0**
+- **输入表单**：左右卡片布局
+  - 左侧卡片：Network（Switch、AP、Clients、Gateway 功能）
+  - 右侧卡片：Guard（摄像头、存储时长、NVR 类型、AI 功能）
+- **推荐结果**：左右布局
+  - 左侧：推荐机型列表（带排名标识）
+  - 右侧：选中机型的详细信息（硬件规格、管理规模、存储配置、资源占用）
 
 **实时计算**
 - 用户修改任何参数后，立即重新计算并更新结果
@@ -211,33 +259,69 @@ CPU使用率 = (总CPU消耗 / 机型CPU容量) × 100%
 - 机型参数和计算公式可配置化
 - 支持后台数据更新，无需重新部署
 
-## 3. 产品型号数据结构（示例）
+## 3. 产品型号数据
+
+### 3.1 产品列表
+
+| 型号 | 服务类型 | CPU | Memory | 存储 | 管理规模 |
+|------|---------|-----|--------|------|---------|
+| **Fusion Pro Wi-Fi 7** | Network + Guard | IPQ5424 Quad A53 1.8GHz<br>19.5K DMIPS (4 cores) | 4GB DDR | SD 卡<br>最大 1TB | 300 clients<br>30 devices<br>10*HD / 4*2K / 2*4K cameras |
+| **Fusion G+** | Network Only | IPQ5322 Quad A53 1.5GHz<br>13.8K DMIPS (4 cores) | 3GB DDR | 无额外存储 | 300 clients<br>30 devices |
+| **Fusion 2.5G** | Network Only | MT7987A Quad A53 2.0GHz<br>18.4K DMIPS (4 cores) | 2GB DDR | 无额外存储 | 300 clients<br>30 devices |
+| **Fusion Pro 2.5G** | Network + Guard | MT7988A Quad A73 1.8GHz<br>34.6K DMIPS (4 cores) | 4GB DDR | SSD 单盘位<br>最大 4TB | 300 clients<br>30 devices<br>15*HD / 8*2K / 5*4K cameras |
+| **Fusion Pro 2.5G PoE** | Network + Guard | MT7988A Quad A73 1.8GHz<br>34.6K DMIPS (4 cores) | 4GB DDR | SSD 单盘位<br>最大 4TB | 300 clients<br>30 devices<br>15*HD / 8*2K / 5*4K cameras |
+| **Fusion Pro 10G** | Network + Guard | IPQ9570 Quad A73 2.2GHz<br>42.2K DMIPS (4 cores) | 4GB DDR | SSD 单盘位<br>最大 4TB | 500 clients<br>50 devices<br>15*HD / 8*2K / 5*4K cameras |
+| **Fusion Max 10G** | Network + Guard | CN9130 + SSR931G<br>51.0K DMIPS (8 cores) | 8GB DDR | HDD 双盘位<br>最大 48TB | 2000 clients<br>200 devices<br>50*HD / 25*2K / 15*4K cameras |
+| **Fusion Max 10G PoE** | Network + Guard | CN9130 + SSR931G<br>51.0K DMIPS (8 cores) | 8GB DDR | HDD 双盘位<br>最大 48TB | 2000 clients<br>200 devices<br>50*HD / 25*2K / 15*4K cameras |
+
+### 3.2 服务类型说明
+
+- **Network Only**: 仅支持网络功能（Controller + Gateway），不支持 Guard（安防）
+- **Network + Guard**: 支持完整功能（Controller + Gateway + Guard）
+
+### 3.3 存储类型说明
+
+- **SD 卡**: 最大容量 1TB，适合小规模存储需求
+- **SSD**: 单盘位，最大容量 4TB，适合中等规模存储
+- **HDD**: 双盘位，最大容量 48TB（24TB × 2），适合大规模长期存储
+
+### 3.4 数据结构（TypeScript）
 
 ```typescript
-interface ProductModel {
+export type StorageType = 'none' | 'sd' | 'ssd' | 'hdd';
+export type ServiceType = 'network' | 'network+guard';
+
+interface Product {
   id: string;
-  name: string;              // 型号名称，如 "Fusion G+"
-  series: string;            // 系列，如 "Fusion"
+  name: string;
+  series: string;
+  supportedServices: ServiceType;  // 支持的服务
   cpu: {
-    capacity: number;        // CPU 容量（DMIPS）
-    cores: number;           // 核心数
-    model: string;           // 型号
+    capacity: number;               // CPU 容量（DMIPS）
+    cores: number;                  // 核心数
+    model: string;                  // 型号
   };
   memory: {
-    capacity: number;        // 内存容量（MB）
+    capacity: number;               // 内存容量（MB）
   };
   storage: {
-    capacity: number;        // 存储容量（GB）
+    type: StorageType;              // 存储类型
+    maxCapacity: number;            // 最大存储容量（GB）
+    slots?: number;                 // 盘位数量
   };
-  price?: number;            // 价格（可选）
-  image?: string;            // 产品图片
-  storeUrl?: string;         // 购买链接
-  specifications?: {         // 其他规格
-    maxAPs?: number;
-    maxSwitches?: number;
-    maxCameras?: number;
+  specifications: {
+    maxClients: number;             // 最大客户端数
+    maxDevices: number;             // 最大设备数（AP + Switch）
+    maxCameras?: {                  // 最大摄像头数（按分辨率）
+      hd: number;
+      '2k': number;
+      '4k': number;
+    };
     ports?: string;
   };
+  price?: number;
+  image?: string;
+  storeUrl?: string;
 }
 ```
 
@@ -328,19 +412,29 @@ src/
 
 ## 6. 开发计划
 
-### V1 版本（MVP）- 优先级 P0
+### V1 版本（MVP）- 优先级 P0 ✅ 已完成
 - ✅ 基础参数输入（AP、Switch、IPC 数量）
 - ✅ NVR 类型选择
 - ✅ 功能开关（AI、IPS、DPI、Content Filter、VPN、QoS）
 - ✅ Controller 和 Gateway 资源计算
 - ✅ 安防系统资源计算（AI 模式）
 - ✅ CPU 和内存使用率展示
-- ✅ 机型推荐（至少支持 Fusion G+ 和 Fusion 2.5G）
+- ✅ 机型推荐（支持 6 个产品型号）
 - ✅ 响应式布局
 
-### V2 版本 - 优先级 P1
-- ⏳ 存储容量计算（基于分辨率、帧率、存储时长）
-- ⏳ 更多产品型号支持
+### V2 版本 - 优先级 P1 ✅ 已完成
+- ✅ 需求驱动的推荐模式
+- ✅ 规格限制检查和智能过滤
+- ✅ Guard 启用/禁用开关
+- ✅ Clients 数量输入
+- ✅ 摄像头分辨率区分（HD/2K/4K）
+- ✅ 存储时长选择（1周/2周/1月/3月/6月）
+- ✅ 自动推荐硬盘大小
+- ✅ 左右布局设计（输入 + 推荐结果）
+- ✅ 滑动条输入方式
+- ✅ 8 个产品型号支持（含 Network Only）
+
+### V3 版本 - 优先级 P2
 - ⏳ 结果导出（PDF/图片）
 - ⏳ 多语言支持
 - ⏳ 分享链接（URL 参数保存配置）
@@ -401,7 +495,7 @@ src/
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2025-11-17
+**文档版本**: v2.0
+**最后更新**: 2025-01-18
 **负责人**: Xavier Chen
-**状态**: Draft
+**状态**: Production
