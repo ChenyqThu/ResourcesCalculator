@@ -15,6 +15,7 @@ export function useCalculator() {
     clientsCount: 0,
 
     // 安防设备 - 按清晰度区分
+    guardEnabled: false, // 默认不启用 Guard
     hdCameras: 0,
     '2kCameras': 0,
     '4kCameras': 0,
@@ -44,6 +45,7 @@ export function useCalculator() {
       apCount: 0,
       switchCount: 0,
       clientsCount: 0,
+      guardEnabled: false,
       hdCameras: 0,
       '2kCameras': 0,
       '4kCameras': 0,
