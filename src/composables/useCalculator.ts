@@ -12,6 +12,7 @@ export function useCalculator() {
     // 网络设备
     apCount: 0,
     switchCount: 0,
+    clientsCount: 0,
 
     // 安防设备 - 按清晰度区分
     hdCameras: 0,
@@ -20,7 +21,7 @@ export function useCalculator() {
     nvrType: 'builtin',
 
     // 存储配置
-    storageDriveSize: 1,
+    storageDuration: 30, // 默认 1 个月
 
     // AI 功能选项
     enableAIDetection: false,
@@ -42,11 +43,12 @@ export function useCalculator() {
     params.value = {
       apCount: 0,
       switchCount: 0,
+      clientsCount: 0,
       hdCameras: 0,
       '2kCameras': 0,
       '4kCameras': 0,
       nvrType: 'builtin',
-      storageDriveSize: 1,
+      storageDuration: 30,
       enableAIDetection: false,
       enablePeopleCount: false,
       enableIPS: false,
