@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProductWithUsage, InputParams } from '@/types';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps<{
   recommendedProducts: ProductWithUsage[];
@@ -8,24 +8,24 @@ const props = defineProps<{
   params: InputParams;
 }>();
 
-// 选中的产品（默认选中第一个推荐产品）
-const selectedProduct = ref<ProductWithUsage | null>(null);
+// 选中的产品 ID（只存储 ID，通过 computed 获取最新的产品对象）
+const selectedProductId = ref<string | null>(null);
 
-// 监听推荐产品变化，自动选中第一个
+// 选中的产品（实时从推荐列表中获取最新数据）
+const selectedProduct = computed(() => {
+  if (!selectedProductId.value) return null;
+  return props.recommendedProducts.find(p => p.id === selectedProductId.value) || null;
+});
+
+// 监听推荐产品变化，总是自动选中第一个
 watch(
   () => props.recommendedProducts,
   (newProducts) => {
     if (newProducts.length > 0) {
-      // 如果没有选中或选中的不在列表中，选中第一个
-      const isCurrentInList = selectedProduct.value
-        ? newProducts.some(p => p.id === selectedProduct.value?.id)
-        : false;
-
-      if (!isCurrentInList) {
-        selectedProduct.value = newProducts[0] || null;
-      }
+      // 总是选中第一个推荐产品，确保显示最新的推荐
+      selectedProductId.value = newProducts[0]?.id || null;
     } else {
-      selectedProduct.value = null;
+      selectedProductId.value = null;
     }
   },
   { immediate: true }
@@ -66,7 +66,7 @@ const getStorageTypeLabel = (type: string) => {
 
 // 选择产品
 const selectProduct = (product: ProductWithUsage) => {
-  selectedProduct.value = product;
+  selectedProductId.value = product.id;
 };
 </script>
 
@@ -84,16 +84,15 @@ const selectProduct = (product: ProductWithUsage) => {
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 左侧：推荐列表 -->
       <div class="lg:col-span-1 space-y-2">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">推荐机型列表</h3>
-        <div class="space-y-2 max-h-[600px] overflow-y-auto">
+        <div class="space-y-2 max-h-[800px] overflow-y-auto">
           <button
             v-for="(product, index) in recommendedProducts"
             :key="product.id"
             @click="selectProduct(product)"
             :class="[
-              'w-full text-left p-4 rounded-lg border-2 transition-all',
+              'w-full text-left p-4 rounded-lg border-2 transition-all relative',
               selectedProduct?.id === product.id
-                ? 'border-primary bg-primary/5 shadow-md'
+                ? 'border-primary bg-primary/20 shadow-md'
                 : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
             ]"
           >
@@ -126,7 +125,13 @@ const selectProduct = (product: ProductWithUsage) => {
 
             <!-- 产品名称 -->
             <h4 class="font-semibold text-gray-900 text-sm mb-1">{{ product.name }}</h4>
-            <p class="text-xs text-gray-500 mb-2">{{ product.series }}</p>
+            <p class="text-xs text-gray-500">{{ product.series }}</p>
+
+            <!-- 存储不足警告 -->
+            <p v-if="product.isStorageInsufficient" class="text-xs text-orange-600 font-semibold mt-1 mb-2">
+              ⚠️ 存储不足 (仅可存 {{ product.actualStorageDays }} 天)
+            </p>
+            <div v-else class="mb-2"></div>
 
             <!-- 综合使用率 -->
             <div class="flex items-center space-x-2">
@@ -174,10 +179,8 @@ const selectProduct = (product: ProductWithUsage) => {
             <div class="bg-white rounded-lg p-4 border">
               <p class="text-xs text-gray-500 mb-1">CPU</p>
               <p class="text-lg font-bold text-gray-900">
-                {{ (selectedProduct.cpu.capacity / 1000).toFixed(1) }}K DMIPS
+                {{ selectedProduct.cpu.cores }} Cores
               </p>
-              <p class="text-xs text-gray-600 mt-1">{{ selectedProduct.cpu.cores }} cores</p>
-              <p class="text-xs text-gray-500 mt-1">{{ selectedProduct.cpu.model }}</p>
             </div>
 
             <div class="bg-white rounded-lg p-4 border">
@@ -231,14 +234,37 @@ const selectProduct = (product: ProductWithUsage) => {
             </div>
 
             <!-- 推荐硬盘大小（仅在启用 Guard 时显示） -->
-            <div v-if="params.guardEnabled && selectedProduct.recommendedStorageSize" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-blue-900">根据您的需求，推荐硬盘:</span>
-                <span class="text-xl font-bold text-blue-700">{{ selectedProduct.recommendedStorageSize }} TB</span>
+            <div v-if="params.guardEnabled && selectedProduct.recommendedStorageSize" class="mt-4">
+              <!-- 存储容量充足 -->
+              <div v-if="!selectedProduct.isStorageInsufficient" class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-blue-900">根据您的需求，推荐硬盘:</span>
+                  <span class="text-xl font-bold text-blue-700">{{ selectedProduct.recommendedStorageSize }} TB</span>
+                </div>
+                <p v-if="selectedProduct.requiredStorageGB" class="text-xs text-blue-600 mt-1">
+                  需要 {{ (selectedProduct.requiredStorageGB / 1024).toFixed(2) }} TB ({{ selectedProduct.requiredStorageGB }} GB)
+                </p>
               </div>
-              <p v-if="selectedProduct.requiredStorageGB" class="text-xs text-blue-600 mt-1">
-                需要 {{ (selectedProduct.requiredStorageGB / 1024).toFixed(2) }} TB ({{ selectedProduct.requiredStorageGB }} GB)
-              </p>
+
+              <!-- 存储容量不足，显示警告 -->
+              <div v-else class="p-3 bg-orange-50 border border-orange-300 rounded-md">
+                <div class="flex items-start space-x-2">
+                  <span class="text-orange-500 text-lg">⚠️</span>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-orange-900">推荐硬盘 (已达设备最大容量):</span>
+                      <span class="text-xl font-bold text-orange-700">{{ selectedProduct.recommendedStorageSize }} TB</span>
+                    </div>
+                    <p class="text-xs text-orange-700">
+                      需要 {{ (selectedProduct.requiredStorageGB / 1024).toFixed(2) }} TB，但该设备最大仅支持 {{ selectedProduct.recommendedStorageSize }} TB
+                    </p>
+                    <p class="text-xs text-orange-800 font-semibold mt-2">
+                      实际可存储时长: <span class="text-base">{{ selectedProduct.actualStorageDays }} 天</span>
+                      （需求: {{ params.storageDuration }} 天）
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

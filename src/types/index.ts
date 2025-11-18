@@ -62,7 +62,7 @@ export interface InputParams {
 
   // 存储配置
   storageDuration: 7 | 14 | 30 | 90 | 180; // 存储天数 (1周/2周/1月/3月/6月)
-  storageDriveSize?: 1 | 8 | 16 | 28; // TB - 推荐的硬盘大小（可选，由系统计算）
+  storageDriveSize?: 1 | 2 | 4 | 8 | 16 | 24 | 28 | 48; // TB - 推荐的硬盘大小（可选，由系统计算）
 
   // AI 功能选项（可多选）
   enableAIDetection: boolean;    // 人形车形检测
@@ -116,6 +116,8 @@ export interface ProductWithUsage extends Product {
   recommendationType?: RecommendationType;
   recommendedStorageSize?: number; // 推荐的硬盘大小 (TB)
   requiredStorageGB?: number; // 需要的存储空间 (GB)
+  actualStorageDays?: number; // 实际可存储的天数（当需求超出设备最大容量时）
+  isStorageInsufficient?: boolean; // 存储容量是否不足
 }
 
 /**

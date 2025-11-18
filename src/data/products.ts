@@ -52,7 +52,7 @@ export const PRODUCTS: Product[] = [
       model: 'IPQ5322 Quad A53 1.5GHz',
     },
     memory: {
-      capacity: 3072, // 3GB DDR
+      capacity: 2048, // 2GB DDR
     },
     storage: {
       type: 'none',

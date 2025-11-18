@@ -60,26 +60,37 @@ export function useRecommendation(
    * 计算所有产品的资源使用情况
    */
   const productsWithUsage = computed<ProductWithUsage[]>(() => {
-    // 计算推荐的硬盘大小（仅在启用 Guard 时）
-    const storageRecommendation = params.value.guardEnabled
-      ? calculateRecommendedStorage(params.value)
-      : { recommendedSize: 1 as const, requiredGB: 0 };
+    // 在 computed 顶层访问响应式数据，确保依赖追踪
+    const currentParams = params.value;
+    const currentResult = result.value;
+    const guardEnabled = currentParams.guardEnabled;
+
+    // 显式访问所有影响存储计算的属性，确保 Vue 建立依赖追踪
+    const storageDuration = currentParams.storageDuration;
+    const hdCameras = currentParams.hdCameras;
+    const twokCameras = currentParams['2kCameras'];
+    const fourkCameras = currentParams['4kCameras'];
 
     return PRODUCTS.map((product) => {
       const cpuUsage = calculateUsagePercentage(
-        result.value.total.cpu,
+        currentResult.total.cpu,
         product.cpu.capacity
       );
       const memoryUsage = calculateUsagePercentage(
-        result.value.total.memory,
+        currentResult.total.memory,
         product.memory.capacity
       );
+
+      // 计算推荐的硬盘大小（仅在启用 Guard 时）
+      const storageRecommendation = guardEnabled
+        ? calculateRecommendedStorage(currentParams, product.storage.maxCapacity)
+        : { recommendedSize: 1 as const, requiredGB: 0, actualStorageDays: storageDuration, isInsufficient: false };
 
       // 综合使用率（取 CPU 和内存的最大值）
       let overallUsage = Math.max(cpuUsage, memoryUsage);
 
       // 检查规格限制
-      const meetsSpecifications = checkSpecificationLimits(product, params.value);
+      const meetsSpecifications = checkSpecificationLimits(product, currentParams);
 
       // 如果不满足规格限制，大幅降低推荐度
       if (!meetsSpecifications) {
@@ -94,7 +105,7 @@ export function useRecommendation(
 
       if (meetsSpecifications && status !== 'overload') {
         // 如果不需要 Guard，优先推荐 network-only 产品
-        const isPreferred = !params.value.guardEnabled && product.supportedServices === 'network';
+        const isPreferred = !guardEnabled && product.supportedServices === 'network';
 
         if (
           overallUsage >= RECOMMENDATION_RANGES.RECOMMENDED.min &&
@@ -123,8 +134,10 @@ export function useRecommendation(
         overallUsage,
         status,
         recommendationType,
-        recommendedStorageSize: params.value.guardEnabled ? storageRecommendation.recommendedSize : undefined,
-        requiredStorageGB: params.value.guardEnabled ? storageRecommendation.requiredGB : undefined,
+        recommendedStorageSize: guardEnabled ? storageRecommendation.recommendedSize : undefined,
+        requiredStorageGB: guardEnabled ? storageRecommendation.requiredGB : undefined,
+        actualStorageDays: guardEnabled ? storageRecommendation.actualStorageDays : undefined,
+        isStorageInsufficient: guardEnabled ? storageRecommendation.isInsufficient : undefined,
       };
     });
   });
@@ -137,7 +150,11 @@ export function useRecommendation(
    * 3. 同类型内按综合使用率排序（从高到低，越接近最佳使用率越好）
    */
   const recommendedProducts = computed(() => {
-    const filtered = productsWithUsage.value.filter(
+    // 在 computed 顶层访问响应式数据，确保依赖追踪
+    const currentProducts = productsWithUsage.value;
+    const guardEnabled = params.value.guardEnabled;
+
+    const filtered = currentProducts.filter(
       (p) => p.recommendationType !== undefined
     );
 
@@ -149,8 +166,17 @@ export function useRecommendation(
     };
 
     return filtered.sort((a, b) => {
+      // 如果启用了 Guard，将存储不足的产品排到最后
+      if (guardEnabled) {
+        const aInsufficient = a.isStorageInsufficient || false;
+        const bInsufficient = b.isStorageInsufficient || false;
+
+        if (aInsufficient && !bInsufficient) return 1;  // a 存储不足，排后面
+        if (!aInsufficient && bInsufficient) return -1; // b 存储不足，a 排前面
+      }
+
       // 如果不需要 Guard，优先推荐 network-only 产品
-      if (!params.value.guardEnabled) {
+      if (!guardEnabled) {
         const aIsNetworkOnly = a.supportedServices === 'network';
         const bIsNetworkOnly = b.supportedServices === 'network';
 
@@ -178,8 +204,8 @@ export function useRecommendation(
         return b.overallUsage - a.overallUsage;
       }
 
-      // advanced 类型：使用率从低到高（留有更多余量）
-      return a.overallUsage - b.overallUsage;
+      // advanced 类型：使用率从高到低（越接近 60% 越好，避免过度配置）
+      return b.overallUsage - a.overallUsage;
     });
   });
 

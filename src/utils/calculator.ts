@@ -217,31 +217,67 @@ export function calculateStorageDays(params: InputParams): number {
  * 根据摄像头数量、类型和期望保存时长，按市面规格向上推荐
  *
  * @param params 输入参数
- * @returns 推荐的硬盘大小（1/8/16/28 TB）和需要的存储空间（GB）
+ * @param maxCapacityGB 设备的最大存储容量 (GB)，不传则不限制
+ * @returns 推荐的硬盘大小（1/8/16/28 TB）、需要的存储空间（GB）、实际可存储天数、是否容量不足
  */
-export function calculateRecommendedStorage(params: InputParams): {
-  recommendedSize: 1 | 8 | 16 | 28;
+export function calculateRecommendedStorage(
+  params: InputParams,
+  maxCapacityGB?: number
+): {
+  recommendedSize: 1 | 2 | 4 | 8 | 16 | 24 | 28 | 48;
   requiredGB: number;
+  actualStorageDays: number;
+  isInsufficient: boolean;
 } {
   const dailyStorageGB = calculateDailyStorage(params);
   const requiredGB = dailyStorageGB * params.storageDuration;
 
   // 如果没有摄像头，返回最小规格
   if (requiredGB === 0) {
-    return { recommendedSize: 1, requiredGB: 0 };
+    return { recommendedSize: 1, requiredGB: 0, actualStorageDays: params.storageDuration, isInsufficient: false };
   }
 
-  // 可用规格（TB）
-  const availableSizes: (1 | 8 | 16 | 28)[] = [1, 8, 16, 28];
+  // 可用规格（TB）- 涵盖市面常见存储容量
+  const availableSizes: (1 | 2 | 4 | 8 | 16 | 24 | 28 | 48)[] = [1, 2, 4, 8, 16, 24, 28, 48];
   const requiredTB = requiredGB / 1024;
 
-  // 向上查找满足需求的最小规格
+  // 如果设备有最大容量限制
+  const maxCapacityTB = maxCapacityGB ? maxCapacityGB / 1024 : Infinity;
+
+  // 向上查找满足需求的最小规格（不超过设备最大容量）
+  let recommendedSize: 1 | 2 | 4 | 8 | 16 | 24 | 28 | 48 = 1;
+  let isInsufficient = false;
+
   for (const size of availableSizes) {
+    // 不能超过设备最大容量
+    if (size > maxCapacityTB) {
+      break;
+    }
+
+    recommendedSize = size;
+
     if (size >= requiredTB) {
-      return { recommendedSize: size, requiredGB: Math.round(requiredGB) };
+      // 找到满足需求的规格
+      return {
+        recommendedSize: size,
+        requiredGB: Math.round(requiredGB),
+        actualStorageDays: params.storageDuration,
+        isInsufficient: false
+      };
     }
   }
 
-  // 如果所有规格都不够，返回最大规格并提示
-  return { recommendedSize: 28, requiredGB: Math.round(requiredGB) };
+  // 如果所有规格都不够（包括设备最大容量限制），推荐最大可用规格，并计算实际可存储天数
+  isInsufficient = true;
+  const actualStorageGB = recommendedSize * 1024;
+  const actualStorageDays = dailyStorageGB > 0
+    ? Math.floor(actualStorageGB / dailyStorageGB)
+    : 0;
+
+  return {
+    recommendedSize,
+    requiredGB: Math.round(requiredGB),
+    actualStorageDays,
+    isInsufficient: true
+  };
 }

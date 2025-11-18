@@ -15,6 +15,22 @@ const updateParam = <K extends keyof InputParams>(key: K, value: InputParams[K])
   emit('update:params', { ...props.params, [key]: value });
 };
 
+// 格式化显示函数
+const formatSwitchCount = (value: number) => {
+  if (value >= 5) return '5+';
+  return value.toString();
+};
+
+const formatAPCount = (value: number) => {
+  if (value >= 30) return '30+';
+  return value.toString();
+};
+
+const formatClientsCount = (value: number) => {
+  if (value >= 500) return '500+';
+  return value.toString();
+};
+
 // Network 启用状态（总是启用）
 const networkEnabled = computed({
   get: () => true,
@@ -25,14 +41,19 @@ const networkEnabled = computed({
 const guardEnabled = computed({
   get: () => props.params.guardEnabled,
   set: (value: boolean) => {
-    updateParam('guardEnabled', value);
-    // 如果禁用 Guard，清空相关参数
+    // 如果禁用 Guard，一次性清空所有相关参数
     if (!value) {
-      updateParam('hdCameras', 0);
-      updateParam('2kCameras', 0);
-      updateParam('4kCameras', 0);
-      updateParam('enableAIDetection', false);
-      updateParam('enablePeopleCount', false);
+      emit('update:params', {
+        ...props.params,
+        guardEnabled: false,
+        hdCameras: 0,
+        '2kCameras': 0,
+        '4kCameras': 0,
+        enableAIDetection: false,
+        enablePeopleCount: false,
+      });
+    } else {
+      updateParam('guardEnabled', value);
     }
   }
 });
@@ -53,14 +74,14 @@ const guardEnabled = computed({
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-sm font-medium text-gray-700">Switch 数量</label>
-            <span class="text-sm font-semibold text-gray-900">{{ params.switchCount }}</span>
+            <span class="text-sm font-semibold text-gray-900">{{ formatSwitchCount(params.switchCount) }}</span>
           </div>
           <input
             type="range"
             :value="params.switchCount"
             @input="updateParam('switchCount', Number(($event.target as HTMLInputElement).value))"
             min="0"
-            max="200"
+            max="6"
             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
           />
         </div>
@@ -69,14 +90,14 @@ const guardEnabled = computed({
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-sm font-medium text-gray-700">AP 数量</label>
-            <span class="text-sm font-semibold text-gray-900">{{ params.apCount }}</span>
+            <span class="text-sm font-semibold text-gray-900">{{ formatAPCount(params.apCount) }}</span>
           </div>
           <input
             type="range"
             :value="params.apCount"
             @input="updateParam('apCount', Number(($event.target as HTMLInputElement).value))"
             min="0"
-            max="200"
+            max="31"
             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
           />
         </div>
@@ -85,14 +106,14 @@ const guardEnabled = computed({
         <div>
           <div class="flex items-center justify-between mb-2">
             <label class="text-sm font-medium text-gray-700">Clients 数量</label>
-            <span class="text-sm font-semibold text-gray-900">{{ params.clientsCount }}</span>
+            <span class="text-sm font-semibold text-gray-900">{{ formatClientsCount(params.clientsCount) }}</span>
           </div>
           <input
             type="range"
             :value="params.clientsCount"
             @input="updateParam('clientsCount', Number(($event.target as HTMLInputElement).value))"
             min="0"
-            max="2000"
+            max="510"
             step="10"
             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
           />
