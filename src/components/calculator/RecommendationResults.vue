@@ -256,7 +256,7 @@ const selectProduct = (product: ProductWithUsage) => {
                       <span class="text-xl font-bold text-orange-700">{{ selectedProduct.recommendedStorageSize }} TB</span>
                     </div>
                     <p class="text-xs text-orange-700">
-                      需要 {{ (selectedProduct.requiredStorageGB / 1024).toFixed(2) }} TB，但该设备最大仅支持 {{ selectedProduct.recommendedStorageSize }} TB
+                      需要 {{ ((selectedProduct.requiredStorageGB || 0) / 1024).toFixed(2) }} TB，但该设备最大仅支持 {{ selectedProduct.recommendedStorageSize }} TB
                     </p>
                     <p class="text-xs text-orange-800 font-semibold mt-2">
                       实际可存储时长: <span class="text-base">{{ selectedProduct.actualStorageDays }} 天</span>

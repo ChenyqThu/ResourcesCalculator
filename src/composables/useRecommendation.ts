@@ -67,9 +67,10 @@ export function useRecommendation(
 
     // 显式访问所有影响存储计算的属性，确保 Vue 建立依赖追踪
     const storageDuration = currentParams.storageDuration;
-    const hdCameras = currentParams.hdCameras;
-    const twokCameras = currentParams['2kCameras'];
-    const fourkCameras = currentParams['4kCameras'];
+    // 以下变量仅用于建立响应式依赖追踪，值本身不使用
+    void currentParams.hdCameras;
+    void currentParams['2kCameras'];
+    void currentParams['4kCameras'];
 
     return PRODUCTS.map((product) => {
       const cpuUsage = calculateUsagePercentage(

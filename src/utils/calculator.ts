@@ -278,6 +278,6 @@ export function calculateRecommendedStorage(
     recommendedSize,
     requiredGB: Math.round(requiredGB),
     actualStorageDays,
-    isInsufficient: true
+    isInsufficient
   };
 }
