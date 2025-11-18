@@ -26,7 +26,7 @@
       <!-- Segmented Progress Bar -->
       <div class="flex gap-[2px] h-5">
         <div
-          v-for="(segment, index) in segments"
+          v-for="(_, index) in segments"
           :key="index"
           class="flex-1 rounded-sm transition-all duration-200"
           :class="getSegmentColor(index, resource.usage)"
