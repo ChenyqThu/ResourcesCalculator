@@ -206,8 +206,42 @@ export function calculateStorageDays(params: InputParams): number {
     return 0;
   }
 
-  const availableStorageGB = params.storageDriveSize * 1024; // 转换 TB 到 GB
+  const availableStorageGB = (params.storageDriveSize || 1) * 1024; // 转换 TB 到 GB
   const days = Math.floor(availableStorageGB / dailyStorageGB);
 
   return days;
+}
+
+/**
+ * 计算推荐的硬盘大小 (TB)
+ * 根据摄像头数量、类型和期望保存时长，按市面规格向上推荐
+ *
+ * @param params 输入参数
+ * @returns 推荐的硬盘大小（1/8/16/28 TB）和需要的存储空间（GB）
+ */
+export function calculateRecommendedStorage(params: InputParams): {
+  recommendedSize: 1 | 8 | 16 | 28;
+  requiredGB: number;
+} {
+  const dailyStorageGB = calculateDailyStorage(params);
+  const requiredGB = dailyStorageGB * params.storageDuration;
+
+  // 如果没有摄像头，返回最小规格
+  if (requiredGB === 0) {
+    return { recommendedSize: 1, requiredGB: 0 };
+  }
+
+  // 可用规格（TB）
+  const availableSizes: (1 | 8 | 16 | 28)[] = [1, 8, 16, 28];
+  const requiredTB = requiredGB / 1024;
+
+  // 向上查找满足需求的最小规格
+  for (const size of availableSizes) {
+    if (size >= requiredTB) {
+      return { recommendedSize: size, requiredGB: Math.round(requiredGB) };
+    }
+  }
+
+  // 如果所有规格都不够，返回最大规格并提示
+  return { recommendedSize: 28, requiredGB: Math.round(requiredGB) };
 }

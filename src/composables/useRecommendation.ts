@@ -1,14 +1,17 @@
-import { computed, type ComputedRef } from 'vue';
-import type { CalculationResult, ProductWithUsage, ResourceStatus } from '@/types';
+import { computed, type ComputedRef, type Ref } from 'vue';
+import type { CalculationResult, ProductWithUsage, ResourceStatus, InputParams } from '@/types';
 import { PRODUCTS } from '@/data/products';
 import { USAGE_THRESHOLDS, RECOMMENDATION_RANGES } from '@/data/constants';
-import { calculateUsagePercentage } from '@/utils/calculator';
+import { calculateUsagePercentage, calculateRecommendedStorage } from '@/utils/calculator';
 
 /**
  * 产品推荐引擎 Composable
  * 根据计算结果推荐合适的产品型号
  */
-export function useRecommendation(result: ComputedRef<CalculationResult>) {
+export function useRecommendation(
+  result: ComputedRef<CalculationResult>,
+  params: Ref<InputParams>
+) {
   /**
    * 判断资源使用状态
    */
@@ -23,6 +26,9 @@ export function useRecommendation(result: ComputedRef<CalculationResult>) {
    * 计算所有产品的资源使用情况
    */
   const productsWithUsage = computed<ProductWithUsage[]>(() => {
+    // 计算推荐的硬盘大小
+    const storageRecommendation = calculateRecommendedStorage(params.value);
+
     return PRODUCTS.map((product) => {
       const cpuUsage = calculateUsagePercentage(
         result.value.total.cpu,
@@ -62,20 +68,54 @@ export function useRecommendation(result: ComputedRef<CalculationResult>) {
         overallUsage,
         status,
         recommendationType,
+        recommendedStorageSize: storageRecommendation.recommendedSize,
+        requiredStorageGB: storageRecommendation.requiredGB,
       };
     });
   });
 
   /**
    * 推荐的产品列表（已过滤和排序）
+   * 排序规则：
+   * 1. 优先按推荐类型：recommended > value > advanced
+   * 2. 同类型内按综合使用率排序（从高到低，越接近最佳使用率越好）
    */
   const recommendedProducts = computed(() => {
     const filtered = productsWithUsage.value.filter(
       (p) => p.recommendationType !== undefined
     );
 
-    // 按使用率排序（从低到高）
-    return filtered.sort((a, b) => a.overallUsage - b.overallUsage);
+    // 定义推荐类型优先级
+    const typeOrder: Record<string, number> = {
+      recommended: 1,  // 最推荐
+      value: 2,        // 性价比
+      advanced: 3,     // 高性能
+    };
+
+    return filtered.sort((a, b) => {
+      // 首先按推荐类型排序
+      const typeA = typeOrder[a.recommendationType || ''] || 999;
+      const typeB = typeOrder[b.recommendationType || ''] || 999;
+
+      if (typeA !== typeB) {
+        return typeA - typeB;
+      }
+
+      // 同类型内按使用率排序
+      // recommended 类型：越接近 80% 越好
+      if (a.recommendationType === 'recommended') {
+        const idealUsage = 80;
+        return Math.abs(b.overallUsage - idealUsage) - Math.abs(a.overallUsage - idealUsage);
+      }
+
+      // value 类型：使用率从高到低（越接近 75% 越好）
+      if (a.recommendationType === 'value') {
+        return b.overallUsage - a.overallUsage;
+      }
+
+      // advanced 类型：使用率从低到高（留有更多余量）
+      return a.overallUsage - b.overallUsage;
+    });
   });
 
   /**

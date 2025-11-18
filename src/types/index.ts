@@ -35,6 +35,7 @@ export interface InputParams {
   // 网络设备
   apCount: number;
   switchCount: number;
+  clientsCount: number; // 网络内总 Clients 数量
 
   // 安防设备 - 按清晰度区分
   hdCameras: number;      // HD (1080p) 摄像头数量
@@ -43,7 +44,8 @@ export interface InputParams {
   nvrType: 'builtin' | 'external';
 
   // 存储配置
-  storageDriveSize: 1 | 8 | 16 | 28; // TB
+  storageDuration: 7 | 14 | 30 | 90 | 180; // 存储天数 (1周/2周/1月/3月/6月)
+  storageDriveSize?: 1 | 8 | 16 | 28; // TB - 推荐的硬盘大小（可选，由系统计算）
 
   // AI 功能选项（可多选）
   enableAIDetection: boolean;    // 人形车形检测
@@ -95,6 +97,8 @@ export interface ProductWithUsage extends Product {
   overallUsage: number; // 综合使用率 (%)
   status: ResourceStatus;
   recommendationType?: RecommendationType;
+  recommendedStorageSize?: number; // 推荐的硬盘大小 (TB)
+  requiredStorageGB?: number; // 需要的存储空间 (GB)
 }
 
 /**
