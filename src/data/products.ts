@@ -3,104 +3,153 @@ import type { Product } from '@/types';
 /**
  * Omada 一体机产品型号数据
  *
- * 注意：以下产品规格为示例数据，实际规格需要从产品团队获取
+ * 数据来源：实际产品规格表 (portfolio.png)
+ * 注意：CPU 容量已按建议减半处理
  */
 export const PRODUCTS: Product[] = [
   {
-    id: 'fusion-g-plus',
-    name: 'Omada Fusion G+',
-    series: 'Fusion',
+    id: 'fusion-pro-wifi7',
+    name: 'Fusion Pro Wi-Fi 7',
+    series: 'Small Network',
     cpu: {
-      capacity: 50000, // DMIPS - 待确认实际值
+      capacity: 19460, 
       cores: 4,
-      model: 'Quad-Core ARM',
+      model: 'IPQ5424 Quad A53 1.8GHz',
     },
     memory: {
-      capacity: 8192, // 8GB = 8192MB
+      capacity: 4096, // 4GB DDR
     },
     storage: {
-      capacity: 256, // GB
+      capacity: 32, // 16/32GB EMMC + SD Card
     },
     specifications: {
-      maxAPs: 100,
-      maxSwitches: 50,
-      maxCameras: 32,
-      ports: '8× Gigabit Ethernet Ports',
+      maxAPs: 30,
+      maxSwitches: 30,
+      maxCameras: 10, // 10*HD or 4*2K or 2*4K
+      ports: '2×10G, 4×2.5G PoE+ / WiFi7 2+2+2',
     },
-    image: '/images/fusion-g-plus.png',
-    storeUrl: 'https://www.tp-link.com/store/fusion-g-plus',
+    image: '/images/express7.png',
+    storeUrl: 'https://www.tp-link.com/',
   },
   {
-    id: 'fusion-2.5g',
-    name: 'Omada Fusion 2.5G',
-    series: 'Fusion',
+    id: 'fusion-pro-2.5g',
+    name: 'Fusion Pro 2.5G',
+    series: 'Small Network',
     cpu: {
-      capacity: 80000, // DMIPS - 待确认实际值
-      cores: 8,
-      model: 'Octa-Core ARM',
+      capacity: 34560, 
+      cores: 4,
+      model: 'MT7988A Quad A73 1.8GHz',
     },
     memory: {
-      capacity: 16384, // 16GB = 16384MB
+      capacity: 4096, // 4GB DDR
     },
     storage: {
-      capacity: 512, // GB
+      capacity: 32, // 32GB EMMC + SSD
     },
     specifications: {
-      maxAPs: 200,
-      maxSwitches: 100,
-      maxCameras: 64,
-      ports: '8× 2.5G Ethernet Ports + 2× 10G SFP+',
+      maxAPs: 30,
+      maxSwitches: 30,
+      maxCameras: 15, // 15*HD or 8*2K or 4*4K
+      ports: '5×2.5G',
     },
-    image: '/images/fusion-2.5g.png',
-    storeUrl: 'https://www.tp-link.com/store/fusion-2.5g',
+    image: '/images/ucg-max.png',
+    storeUrl: 'https://www.tp-link.com/',
   },
   {
-    id: 'fusion-entry',
-    name: 'Omada Fusion Entry',
-    series: 'Fusion',
+    id: 'fusion-pro-2.5g-poe',
+    name: 'Fusion Pro 2.5G PoE',
+    series: 'Small Network',
     cpu: {
-      capacity: 30000, // DMIPS - 待确认实际值
-      cores: 2,
-      model: 'Dual-Core ARM',
+      capacity: 34560, 
+      cores: 4,
+      model: 'MT7988A Quad A73 1.8GHz',
     },
     memory: {
-      capacity: 4096, // 4GB = 4096MB
+      capacity: 4096, // 4GB DDR
     },
     storage: {
-      capacity: 128, // GB
+      capacity: 32, // 32GB EMMC + SSD
+    },
+    specifications: {
+      maxAPs: 30,
+      maxSwitches: 30,
+      maxCameras: 15, // 15*HD or 8*2K or 5*4K
+      ports: '1×2.5G, 8×2.5G PoE+',
+    },
+    image: '/images/ucg-max.png',
+    storeUrl: 'https://www.tp-link.com/',
+  },
+  {
+    id: 'fusion-pro-10g',
+    name: 'Fusion Pro 10G',
+    series: 'Small Network',
+    cpu: {
+      capacity: 42240, 
+      cores: 4,
+      model: 'IPQ9570 Quad A73 2.2GHz',
+    },
+    memory: {
+      capacity: 4096, // 4GB DDR
+    },
+    storage: {
+      capacity: 32, // 32GB EMMC + SSD
     },
     specifications: {
       maxAPs: 50,
-      maxSwitches: 25,
-      maxCameras: 16,
-      ports: '5× Gigabit Ethernet Ports',
+      maxSwitches: 50,
+      maxCameras: 15, // 15*HD or 8*2K or 5*4K
+      ports: '3×10G, 4×2.5G PoE+',
     },
-    image: '/images/fusion-entry.png',
-    storeUrl: 'https://www.tp-link.com/store/fusion-entry',
+    image: '/images/ucg-fiber.png',
+    storeUrl: 'https://www.tp-link.com/',
   },
   {
-    id: 'fusion-pro',
-    name: 'Omada Fusion Pro',
-    series: 'Fusion',
+    id: 'fusion-max-10g',
+    name: 'Fusion Max 10G',
+    series: 'Large Network',
     cpu: {
-      capacity: 120000, // DMIPS - 待确认实际值
-      cores: 12,
-      model: '12-Core ARM',
+      capacity: 41360, 
+      cores: 8,
+      model: 'CN9130 Quad A72 2.2GHz + S5R931G Quad A55 1.2GHz',
     },
     memory: {
-      capacity: 32768, // 32GB = 32768MB
+      capacity: 8192, // 8GB DDR
     },
     storage: {
-      capacity: 1024, // 1TB = 1024GB
+      capacity: 256, // 256GB EMMC
     },
     specifications: {
-      maxAPs: 500,
+      maxAPs: 200,
       maxSwitches: 200,
-      maxCameras: 128,
-      ports: '8× 10G SFP+ + 4× 25G SFP28',
+      maxCameras: 50, // 50*HD or 25*2K or 15*4K
+      ports: '3×10GE, 8×2.5GE',
     },
-    image: '/images/fusion-pro.png',
-    storeUrl: 'https://www.tp-link.com/store/fusion-pro',
+    image: '/images/udm-pro-max.png',
+    storeUrl: 'https://www.tp-link.com/',
+  },
+  {
+    id: 'fusion-max-10g-poe',
+    name: 'Fusion Max 10G PoE',
+    series: 'Large Network',
+    cpu: {
+      capacity: 41360, 
+      cores: 8,
+      model: 'CN9130 Quad A72 2.2GHz + S5R931G Quad A55 1.2GHz',
+    },
+    memory: {
+      capacity: 8192, // 8GB DDR
+    },
+    storage: {
+      capacity: 256, // 256GB EMMC
+    },
+    specifications: {
+      maxAPs: 200,
+      maxSwitches: 200,
+      maxCameras: 50, // Max 50*HD or 25*2K or 15*4K
+      ports: '3×10GE, 8×2.5GE PoE+',
+    },
+    image: '/images/udm-se.png',
+    storeUrl: 'https://www.tp-link.com/',
   },
 ];
 

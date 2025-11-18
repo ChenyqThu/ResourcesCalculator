@@ -36,22 +36,23 @@ export interface InputParams {
   apCount: number;
   switchCount: number;
 
-  // 安防设备
-  ipcCount: number;
+  // 安防设备 - 按清晰度区分
+  hdCameras: number;      // HD (1080p) 摄像头数量
+  '2kCameras': number;    // 2K 摄像头数量
+  '4kCameras': number;    // 4K 摄像头数量
   nvrType: 'builtin' | 'external';
 
-  // 功能选项
-  enableAI: boolean;
-  aiMode: 'detection' | 'peopleCount';
+  // 存储配置
+  storageDriveSize: 1 | 8 | 16 | 28; // TB
+
+  // AI 功能选项（可多选）
+  enableAIDetection: boolean;    // 人形车形检测
+  enablePeopleCount: boolean;     // 人头计数
   enableIPS: boolean;
   enableDPI: boolean;
   enableContentFilter: boolean;
   enableVPN: boolean;
   enableQoS: boolean;
-
-  // V2 功能
-  cameraResolution?: '1080p' | '4K' | '8K';
-  storageDays?: number;
 }
 
 /**
@@ -123,15 +124,20 @@ export interface CalculationConstants {
   PROTECT_BASE_CPU: number;
   PROTECT_BASE_MEMORY: number;
 
-  // AI Detection Mode
-  PROTECT_AI_DETECTION_BUILTIN_CPU: number;
-  PROTECT_AI_DETECTION_EXTERNAL_CPU: number;
+  // 基础 CPU 成本（每个摄像头，不包含 AI）
+  PROTECT_BASE_BUILTIN_CPU_PER_IPC: number;
+  PROTECT_BASE_EXTERNAL_CPU_PER_IPC: number;
 
-  // People Count Mode
-  PROTECT_PEOPLE_COUNT_BUILTIN_CPU: number;
-  PROTECT_PEOPLE_COUNT_EXTERNAL_CPU: number;
+  // AI 增量 CPU 成本
+  PROTECT_AI_DETECTION_CPU_PER_IPC: number;
+  PROTECT_PEOPLE_COUNT_CPU_PER_IPC: number;
 
   // Memory per IPC
   PROTECT_BUILTIN_MEMORY_PER_IPC: number;
   PROTECT_EXTERNAL_MEMORY_PER_IPC: number;
+
+  // Storage
+  STORAGE_HD_PER_DAY: number;
+  STORAGE_2K_PER_DAY: number;
+  STORAGE_4K_PER_DAY: number;
 }

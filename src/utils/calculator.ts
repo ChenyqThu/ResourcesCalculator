@@ -70,43 +70,59 @@ export function calculateGateway(params: InputParams): ModuleResources {
 /**
  * 计算 Protect (安防) 资源消耗
  *
- * 公式（开启 AI - 人形车形检测）：
- * - CPU: 360 + 129600 × n1 + 265225 × n2
- * - Memory: 928 + 14.5 × n1 + 22 × n2
+ * CPU 成本构成（每个摄像头）：
+ * - 基础成本：150(连接+无图事件+巡店) + NVR成本
+ *   - 内置NVR：170(内置NVR事件+播放+AI数据流推送)
+ *   - 外置NVR：325(Relay推拉流)
+ * - AI 增量成本（可选，可多选）：
+ *   - 人形车形检测：40
+ *   - 人头计数：190
  *
- * 公式（开启 People Count）：
- * - CPU: 360 + 183600 × n1 + 342725 × n2
+ * 公式：
+ * - 只开人形车形：360 + (320 + 40) * n1 + (475 + 40) * n2 = 360 + 360 * n1 + 515 * n2
+ * - 只开 People Count：360 + (320 + 190) * n1 + (475 + 190) * n2 = 360 + 510 * n1 + 665 * n2
+ * - 两个都开：360 + (320 + 40 + 190) * n1 + (475 + 40 + 190) * n2 = 360 + 550 * n1 + 705 * n2
  * - Memory: 928 + 14.5 × n1 + 22 × n2
  *
  * 其中：
  * - n1 = 内置NVR下的IPC数量
  * - n2 = 外置NVR下的IPC数量
+ *
+ * 注意：CPU/内存消耗与摄像头清晰度无关，主要取决于摄像头总数
  */
 export function calculateProtect(params: InputParams): ModuleResources {
-  if (params.ipcCount === 0) {
+  // 计算摄像头总数
+  const totalCameras = params.hdCameras + params['2kCameras'] + params['4kCameras'];
+
+  if (totalCameras === 0) {
     return { cpu: 0, memory: 0 };
   }
 
   let cpu = CALCULATION_CONSTANTS.PROTECT_BASE_CPU;
   let memory = CALCULATION_CONSTANTS.PROTECT_BASE_MEMORY;
 
-  const n1 = params.nvrType === 'builtin' ? params.ipcCount : 0;
-  const n2 = params.nvrType === 'external' ? params.ipcCount : 0;
+  const n1 = params.nvrType === 'builtin' ? totalCameras : 0;
+  const n2 = params.nvrType === 'external' ? totalCameras : 0;
 
-  if (params.enableAI) {
-    if (params.aiMode === 'detection') {
-      // 人形车形检测
-      cpu +=
-        CALCULATION_CONSTANTS.PROTECT_AI_DETECTION_BUILTIN_CPU * n1 +
-        CALCULATION_CONSTANTS.PROTECT_AI_DETECTION_EXTERNAL_CPU * n2;
-    } else if (params.aiMode === 'peopleCount') {
-      // 人头计数
-      cpu +=
-        CALCULATION_CONSTANTS.PROTECT_PEOPLE_COUNT_BUILTIN_CPU * n1 +
-        CALCULATION_CONSTANTS.PROTECT_PEOPLE_COUNT_EXTERNAL_CPU * n2;
-    }
+  // 计算每个摄像头的 CPU 成本
+  let cpuPerBuiltinIPC = CALCULATION_CONSTANTS.PROTECT_BASE_BUILTIN_CPU_PER_IPC;
+  let cpuPerExternalIPC = CALCULATION_CONSTANTS.PROTECT_BASE_EXTERNAL_CPU_PER_IPC;
+
+  // 添加 AI 增量成本
+  if (params.enableAIDetection) {
+    cpuPerBuiltinIPC += CALCULATION_CONSTANTS.PROTECT_AI_DETECTION_CPU_PER_IPC;
+    cpuPerExternalIPC += CALCULATION_CONSTANTS.PROTECT_AI_DETECTION_CPU_PER_IPC;
   }
 
+  if (params.enablePeopleCount) {
+    cpuPerBuiltinIPC += CALCULATION_CONSTANTS.PROTECT_PEOPLE_COUNT_CPU_PER_IPC;
+    cpuPerExternalIPC += CALCULATION_CONSTANTS.PROTECT_PEOPLE_COUNT_CPU_PER_IPC;
+  }
+
+  // 计算总 CPU
+  cpu += cpuPerBuiltinIPC * n1 + cpuPerExternalIPC * n2;
+
+  // 计算总 Memory
   memory +=
     CALCULATION_CONSTANTS.PROTECT_BUILTIN_MEMORY_PER_IPC * n1 +
     CALCULATION_CONSTANTS.PROTECT_EXTERNAL_MEMORY_PER_IPC * n2;
@@ -165,4 +181,33 @@ export function formatResource(value: number, unit: string): string {
  */
 export function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`;
+}
+
+/**
+ * 计算每天的总存储需求 (GB/天)
+ */
+export function calculateDailyStorage(params: InputParams): number {
+  const hdStorage = params.hdCameras * CALCULATION_CONSTANTS.STORAGE_HD_PER_DAY;
+  const twoKStorage = params['2kCameras'] * CALCULATION_CONSTANTS.STORAGE_2K_PER_DAY;
+  const fourKStorage = params['4kCameras'] * CALCULATION_CONSTANTS.STORAGE_4K_PER_DAY;
+
+  return hdStorage + twoKStorage + fourKStorage;
+}
+
+/**
+ * 计算可存储天数
+ * @param params 输入参数
+ * @returns 可存储的天数（向下取整）
+ */
+export function calculateStorageDays(params: InputParams): number {
+  const dailyStorageGB = calculateDailyStorage(params);
+
+  if (dailyStorageGB === 0) {
+    return 0;
+  }
+
+  const availableStorageGB = params.storageDriveSize * 1024; // 转换 TB 到 GB
+  const days = Math.floor(availableStorageGB / dailyStorageGB);
+
+  return days;
 }

@@ -5,7 +5,7 @@
       :key="resource.label"
       class="bg-white p-4 rounded-lg border"
     >
-      <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between mb-3">
         <span class="font-semibold text-sm">{{ resource.label }}</span>
         <div class="flex items-center space-x-3">
           <span class="text-xs text-muted-foreground">
@@ -23,17 +23,13 @@
         </div>
       </div>
 
-      <!-- Progress Bar -->
-      <div class="relative h-6 bg-gray-100 rounded-full overflow-hidden">
+      <!-- Segmented Progress Bar -->
+      <div class="flex gap-[2px] h-5">
         <div
-          class="absolute inset-0 transition-all duration-300 rounded-full"
-          :class="getBarColor(resource.usage)"
-          :style="{ width: `${Math.min(resource.usage, 100)}%` }"
-        />
-        <!-- Overflow indicator -->
-        <div
-          v-if="resource.usage > 100"
-          class="absolute inset-0 bg-red-500/20 animate-pulse rounded-full"
+          v-for="(segment, index) in segments"
+          :key="index"
+          class="flex-1 rounded-sm transition-all duration-200"
+          :class="getSegmentColor(index, resource.usage)"
         />
       </div>
     </div>
@@ -52,6 +48,9 @@ interface ResourceInfo {
 defineProps<{
   resources: ResourceInfo[];
 }>();
+
+// 定义分段数量（总共100个方格，对应100%）
+const segments = Array.from({ length: 100 }, (_, i) => i);
 
 const formatValue = (value: number, unit: string): string => {
   if (unit === 'DMIPS' && value >= 1000) {
@@ -74,11 +73,34 @@ const getUsageColor = (usage: number): string => {
   return 'text-green-600';
 };
 
-const getBarColor = (usage: number): string => {
-  if (usage > 100) return 'bg-gradient-to-r from-red-500 to-red-600';
-  if (usage >= 90) return 'bg-red-500';
-  if (usage >= 80) return 'bg-orange-500';
-  if (usage >= 60) return 'bg-yellow-500';
-  return 'bg-green-500';
+/**
+ * 根据方格位置和使用率获取方格颜色
+ * @param index 方格索引 (0-99，对应 0%-100%)
+ * @param usage 使用率 (0-100+)
+ */
+const getSegmentColor = (index: number, usage: number): string => {
+  // 100个格子，index 就代表百分比 (0-99 对应 0%-99%)
+  const segmentPercentage = index;
+  const isFilled = index < usage;
+
+  if (!isFilled) {
+    // 未填充的方格显示为浅灰色背景
+    return 'bg-gray-200';
+  }
+
+  // 填充的方格根据位置显示不同颜色（渐变效果）
+  if (segmentPercentage >= 90) {
+    // 90-100%: 红色
+    return 'bg-red-500';
+  } else if (segmentPercentage >= 80) {
+    // 80-90%: 橙色
+    return 'bg-orange-500';
+  } else if (segmentPercentage >= 60) {
+    // 60-80%: 黄色
+    return 'bg-yellow-400';
+  } else {
+    // 0-60%: 绿色（Omada绿）
+    return 'bg-[#00B050]';
+  }
 };
 </script>

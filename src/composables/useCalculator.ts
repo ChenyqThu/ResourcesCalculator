@@ -13,22 +13,25 @@ export function useCalculator() {
     apCount: 0,
     switchCount: 0,
 
-    // 安防设备
-    ipcCount: 0,
+    // 安防设备 - 按清晰度区分
+    hdCameras: 0,
+    '2kCameras': 0,
+    '4kCameras': 0,
     nvrType: 'builtin',
 
-    // 功能选项
-    enableAI: false,
-    aiMode: 'detection',
+    // 存储配置
+    storageDriveSize: 1,
+
+    // AI 功能选项
+    enableAIDetection: false,
+    enablePeopleCount: false,
+
+    // Gateway 功能选项
     enableIPS: false,
     enableDPI: false,
     enableContentFilter: false,
     enableVPN: false,
     enableQoS: false,
-
-    // V2 功能
-    cameraResolution: '1080p',
-    storageDays: 30,
   });
 
   // 计算结果（响应式）
@@ -39,17 +42,18 @@ export function useCalculator() {
     params.value = {
       apCount: 0,
       switchCount: 0,
-      ipcCount: 0,
+      hdCameras: 0,
+      '2kCameras': 0,
+      '4kCameras': 0,
       nvrType: 'builtin',
-      enableAI: false,
-      aiMode: 'detection',
+      storageDriveSize: 1,
+      enableAIDetection: false,
+      enablePeopleCount: false,
       enableIPS: false,
       enableDPI: false,
       enableContentFilter: false,
       enableVPN: false,
       enableQoS: false,
-      cameraResolution: '1080p',
-      storageDays: 30,
     };
   };
 

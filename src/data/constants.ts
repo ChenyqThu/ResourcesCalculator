@@ -29,22 +29,27 @@ export const CALCULATION_CONSTANTS: CalculationConstants = {
   PROTECT_BASE_CPU: 360,
   PROTECT_BASE_MEMORY: 928,
 
-  // AI Detection Mode (人形车形检测)
-  // 公式：360 = [150(连接+无图事件+巡店) + 40(人形车形) + 170(内置NVR)]
-  PROTECT_AI_DETECTION_BUILTIN_CPU: 360,
-  // 公式：515 = [150(连接+无图事件+巡店) + 40(人形车形) + 325(Relay推拉流)]
-  PROTECT_AI_DETECTION_EXTERNAL_CPU: 515,
+  // 基础 CPU 成本（每个摄像头，不包含 AI）
+  // 公式：150(连接+无图事件+巡店) + 170(内置NVR事件+播放+AI数据流推送)
+  PROTECT_BASE_BUILTIN_CPU_PER_IPC: 320,
+  // 公式：150(连接+无图事件+巡店) + 325(Relay推拉流)
+  PROTECT_BASE_EXTERNAL_CPU_PER_IPC: 475,
 
-  // People Count Mode (人头计数)
-  // 公式：510 = [150(连接+无图事件+巡店) + 190(人头) + 170(内置NVR)]
-  PROTECT_PEOPLE_COUNT_BUILTIN_CPU: 510,
-  // 公式：665 = [150(连接+无图事件+巡店) + 190(人头) + 325(Relay推拉流)]
-  PROTECT_PEOPLE_COUNT_EXTERNAL_CPU: 665,
+  // AI 增量 CPU 成本（每个摄像头）
+  PROTECT_AI_DETECTION_CPU_PER_IPC: 40,    // 人形车形检测
+  PROTECT_PEOPLE_COUNT_CPU_PER_IPC: 190,   // 人头计数
 
   // Memory per IPC
   // 公式：4.5（管理端）+ 10（内置NVR）= 14.5
   PROTECT_BUILTIN_MEMORY_PER_IPC: 14.5,
   PROTECT_EXTERNAL_MEMORY_PER_IPC: 22,
+
+  // ==================== Storage ====================
+  // 存储需求：每个摄像头每天的存储需求 (GB/天)
+  // 基于 H.264/H.265 编码，24小时连续录制
+  STORAGE_HD_PER_DAY: 12,      // HD (1080p) 摄像头每天约 12GB
+  STORAGE_2K_PER_DAY: 22,      // 2K 摄像头每天约 22GB
+  STORAGE_4K_PER_DAY: 45,      // 4K 摄像头每天约 45GB
 } as const;
 
 /**
