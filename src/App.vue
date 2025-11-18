@@ -279,7 +279,7 @@ watch(currentProductLimits, (limits) => {
                 <label class="text-sm font-medium text-gray-700 mb-2 block">Storage Drive Size</label>
                 <div class="grid grid-cols-2 gap-2">
                   <button
-                    v-for="size in [1, 8, 16, 28]"
+                    v-for="size in ([1, 8, 16, 28] as const)"
                     :key="size"
                     @click="params.storageDriveSize = size"
                     :class="[
